@@ -1,0 +1,36 @@
+name: hami
+
+defaultNamespace: kube-system
+
+labels:
+  service: hami
+  component: helm
+
+# HAMi GPU virtualization. Coexists with an nvidia-device-plugin bundle: both
+# advertise nvidia.com/gpu, so they must never select the same node. The split
+# is the `gpu-plugin` node label — HAMi takes nodes labelled `hami`, the stock
+# plugin takes everything else (give it a NotIn affinity on the same key).
+#
+# The label is set by hand, not by this bundle, so a migration is one kubectl
+# command and Fleet never fights an in-progress cutover.
+
+helm:
+  repo: https://project-hami.github.io/HAMi/
+  chart: hami
+  version: "2.9.0"
+  releaseName: hami
+  valuesFiles:
+    - values.yaml
+
+# The device plugin needs runtimeClassName: nvidia to reach NVML, so whatever
+# creates the RuntimeClass must land first. Drop this if the RuntimeClass comes
+# from the OS image or the GPU Operator rather than a sibling bundle.
+dependsOn:
+  - selector:
+      matchLabels:
+        service: nvidia-runtimeclass
+
+# targets:
+#   - clusterSelector:
+#       matchLabels:
+#         gpu: "true"

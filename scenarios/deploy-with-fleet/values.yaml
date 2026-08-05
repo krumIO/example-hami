@@ -1,0 +1,39 @@
+# HAMi values — the settings that actually matter. Everything else is chart default.
+
+devicePlugin:
+  # Required wherever the cluster's default runtime is runc. Without it the
+  # plugin can't reach NVML and crash-loops with "invalid device discovery
+  # strategy" — a message that blames the host toolkit, not the pod's runtime.
+  runtimeClassName: nvidia
+  # Leave the RuntimeClass object to the cluster; don't have the chart create it.
+  createRuntimeClass: false
+
+  # `gpu: null` removes the chart's default selector key. Helm deep-merges maps,
+  # so without it the DaemonSet requires BOTH gpu=on and gpu-plugin=hami.
+  # Verify with: helm template ... | grep -A4 'nodeSelector:'
+  nvidiaNodeSelector:
+    gpu: null
+    gpu-plugin: hami
+
+  # Virtual devices per physical card.
+  deviceSplitCount: 10
+  # 1 = advertise only the memory that physically exists. Raising this
+  # oversubscribes VRAM, which surfaces as an OOM inside somebody's container
+  # rather than as a scheduling failure. Raise only when you know the real
+  # footprint of everything sharing the card.
+  deviceMemoryScaling: 1
+
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+scheduler:
+  admissionWebhook:
+    # Rewrites schedulerName to hami-scheduler on every GPU pod cluster-wide,
+    # from the moment it's installed, whether or not the device plugin works.
+    #
+    # true  — fine once every GPU node runs HAMi.
+    # false — required during a phased migration; set schedulerName explicitly
+    #         on migrated workloads instead.
+    enabled: true

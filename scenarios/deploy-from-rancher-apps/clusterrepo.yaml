@@ -1,0 +1,17 @@
+# Registers the HAMi chart repository with Rancher, cluster-wide.
+#
+#   kubectl apply -f clusterrepo.yaml
+#
+# This is what the UI creates when you add a repository under Apps →
+# Repositories. Applying it directly means the entry is reproducible and can be
+# delivered by GitOps, while still showing up for anyone who prefers the UI.
+#
+# Rancher polls the index and populates the chart list; give it a few seconds,
+# then check status:
+#   kubectl get clusterrepo hami -o jsonpath='{.status.conditions}'
+apiVersion: catalog.cattle.io/v1
+kind: ClusterRepo
+metadata:
+  name: hami
+spec:
+  url: https://project-hami.github.io/HAMi/

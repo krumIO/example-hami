@@ -1,0 +1,35 @@
+# Proves HAMi is enforcing a memory slice, not just accounting for one.
+#
+#   kubectl apply -f vgpu-smoke-test.yaml
+#   kubectl logs vgpu-smoke-test
+#
+# Expect nvidia-smi to report the LIMIT (1024 MiB), not the card's physical
+# memory. Seeing the real figure means the pod bypassed HAMi — usually because
+# it landed on a node still running nvidia-device-plugin.
+#
+# schedulerName is set explicitly so this works whether or not the admission
+# webhook is enabled. With the webhook on it would be injected anyway.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vgpu-smoke-test
+spec:
+  schedulerName: hami-scheduler
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  containers:
+    - name: cuda
+      image: nvidia/cuda:12.2.0-base-ubuntu22.04
+      command:
+        - sh
+        - -c
+        - |
+          echo "--- what this container can see ---"
+          nvidia-smi --query-gpu=name,memory.total --format=csv
+          echo "--- full nvidia-smi ---"
+          nvidia-smi
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+          nvidia.com/gpumem: "1024"   # MiB
+          nvidia.com/gpucores: "20"   # percent of SM time

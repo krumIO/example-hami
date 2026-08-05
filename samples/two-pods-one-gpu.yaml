@@ -1,0 +1,47 @@
+# Two pods, one physical card, different memory slices each.
+#
+#   kubectl apply -f two-pods-one-gpu.yaml
+#   kubectl get pods -o wide | grep vgpu-share    # same NODE, both Running
+#   kubectl logs vgpu-share-a                     # reports 1024 MiB
+#   kubectl logs vgpu-share-b                     # reports 2048 MiB
+#
+# Both sleep, so you can confirm they are genuinely co-resident rather than
+# running one after the other — a sequential pair proves nothing about sharing.
+#
+# Without HAMi the second pod would stay Pending: stock nvidia-device-plugin
+# advertises one nvidia.com/gpu per card, so the first pod consumes it whole.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vgpu-share-a
+  labels: {app: vgpu-share}
+spec:
+  schedulerName: hami-scheduler
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  containers:
+    - name: cuda
+      image: nvidia/cuda:12.2.0-base-ubuntu22.04
+      command: ["sh","-c","nvidia-smi --query-gpu=memory.total --format=csv; sleep 300"]
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+          nvidia.com/gpumem: "1024"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vgpu-share-b
+  labels: {app: vgpu-share}
+spec:
+  schedulerName: hami-scheduler
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  containers:
+    - name: cuda
+      image: nvidia/cuda:12.2.0-base-ubuntu22.04
+      command: ["sh","-c","nvidia-smi --query-gpu=memory.total --format=csv; sleep 300"]
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+          nvidia.com/gpumem: "2048"
