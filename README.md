@@ -24,6 +24,8 @@ It also runs its own scheduler and a mutating webhook that routes GPU pods to it
 
 Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, and — on most clusters — pods that name a `runtimeClassName`. See [`docs/prerequisites.md`](docs/prerequisites.md). Skipping this produces a crash loop whose error message blames the host toolkit even when the host is fine.
 
+**HAMi virtualizes NVIDIA GPUs, not AMD or Intel ones.** Those can coexist in the same cluster — different vendors advertise different resource names, so their device plugins don't collide — but they need their own tooling, and a node whose only GPU is an AMD or Intel iGPU will break HAMi's plugin if your selector is loose enough to match it. The prerequisites doc covers how hybrid machines mislabel themselves.
+
 ## Pick a scenario
 
 **Installing:**

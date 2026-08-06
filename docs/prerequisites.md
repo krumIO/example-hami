@@ -1,5 +1,36 @@
 # Prerequisites
 
+## First: does HAMi cover your accelerators?
+
+HAMi virtualizes **NVIDIA** GPUs. It also has backends for a set of mostly-Chinese accelerators — Cambricon MLU, Hygon DCU, MetaX, Enflame, Kunlunxin, Mthreads, Vastai, Huawei Ascend, Iluvatar — each with its own resource names.
+
+**AMD (ROCm) and Intel are not among them.** Chart 2.9.0 lists `amd.com/gpu` under `devices:` as a resource set it can be made aware of, but there is no AMD virtualization backend and no top-level `amdResourceName` the way there is for the vendors above. Intel appears nowhere in the chart at all. If your accelerators are AMD Instinct/Radeon or Intel Arc/Flex/Gaudi, HAMi is the wrong tool — look at the AMD GPU Operator or [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has its own `sharedDevNum` fractional-sharing mechanism.
+
+One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an AMD card will work.
+
+### Mixed-vendor clusters are fine; mixed-vendor *selectors* are not
+
+Different vendors advertise different resource names, so their device plugins don't collide. An AMD plugin serving `amd.com/gpu` and HAMi serving `nvidia.com/gpu` coexist happily on the same node — unlike two plugins both claiming `nvidia.com/gpu`, which is the conflict the [migration scenarios](../scenarios/migrate-nvidia-to-hami/) exist to manage.
+
+The real hazard is **node selection**. HAMi's device plugin only understands NVIDIA hardware; land it on a node whose only GPU is an AMD or Intel one and it finds nothing through NVML and fails. So the selector you give `devicePlugin.nvidiaNodeSelector` has to mean "this node has an NVIDIA GPU", not "this node has a GPU".
+
+That's harder than it sounds, because **generic GPU labellers describe the wrong device on hybrid machines.** A labeller that enumerates PCI devices and reports the first one will describe the *integrated* GPU — the one in the CPU package — and never mention the discrete card:
+
+```text
+gpu-count      1
+gpu0-driver    amdgpu
+gpu0-vendor    Advanced-Micro-Devices-Inc.-AMD-ATI
+gpu0-product   Renoir-Radeon-Vega-Series-Radeon-Vega-Mobile-Series
+```
+
+That is a real node with a discrete NVIDIA card in it, running NVIDIA workloads. The labels describe the Ryzen APU's iGPU; the accelerator you care about isn't represented at all. A selector of `gpu0-vendor=NVIDIA...` would match zero nodes, and `gpu-count: 1` undercounts. Consequences to plan around:
+
+- **Select on a label you control** (`gpu-plugin=hami`, or a pool label your provisioner sets), never on a vendor label emitted by autodiscovery.
+- **`nvidia-smi` is the source of truth** for what NVIDIA can see. An iGPU is invisible to NVML, so the driver's device count and any generic `gpu-count` label legitimately disagree.
+- **Watch the control plane.** Nodes with only an Intel iGPU can pick up a generic `gpu`-ish label from the same labeller. If HAMi's selector is loose enough to match them, its plugin schedules there and crash-loops.
+
+## The four requirements
+
 Four things must be true before HAMi will work. Three are about the nodes; the fourth is a decision you make at install time.
 
 | | Requirement | Verify with |
@@ -133,6 +164,7 @@ The annotation is where per-card detail lives:
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Plugin `CrashLoopBackOff`, log says `invalid device discovery strategy` / `Incompatible strategy detected auto` | pod is running under `runc` and can't reach NVML — the message blames the toolkit, but the host is usually fine | set `devicePlugin.runtimeClassName: nvidia` (§2) |
+| Plugin running but registers no devices, on a node that does have a GPU | that GPU isn't NVIDIA — an AMD/Intel iGPU is invisible to NVML | tighten the node selector; see the mixed-vendor section above |
 | Pod stuck `ContainerCreating`, `no runtime for "nvidia" is configured` | that node has no NVIDIA runtime in containerd | finish node enablement (§1); affects both plugins identically |
 | DaemonSet `DESIRED 0` | node selector matches nothing | check the labels, and that `helm template` rendered the selector you expected |
 | GPU pods `Pending` on `hami-scheduler`, no events | webhook is live but no node has a registered device | fix the plugin, or disable the webhook (§4) |
