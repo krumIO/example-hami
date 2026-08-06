@@ -25,7 +25,9 @@ Intel Arc/Flex/Gaudi therefore need [Intel's own device plugins](https://github.
 
 If you're choosing tooling for a fleet that includes Intel accelerators, this is the entry to watch — the coexistence pattern in [`../scenarios/mixed-gpu-vendors/`](../scenarios/mixed-gpu-vendors) is designed so that adopting a future HAMi Intel backend is a plugin swap on those nodes rather than a re-architecture.
 
-Two other roadmap entries worth knowing about when planning: **DRA support** (the chart already ships a `dra.enabled: false` toggle and a `hami-dra` subchart, so this is partly in flight) and **MIG support**. Read the roadmap as direction, not commitment, and in both directions — "Support AMD GPU device" is still listed as planned although the code has merged, so entries lag delivery as well as precede it. Check for a merged PR before assuming a roadmap item is far off, and check the release tags before assuming a merged PR is usable.
+Two other roadmap entries worth knowing about when planning: **DRA support** (the chart already ships a `dra.enabled: false` toggle and a `hami-dra` subchart) and **MIG support**.
+
+The roadmap tracks what has **shipped**, not what has merged, which is why "Support AMD GPU device" is still listed as planned — correctly, because it isn't in a release tag. So a roadmap entry reliably tells you a feature is not available to you yet. What it doesn't tell you is how close it is: for that, look for a merged PR. AMD and Intel sit in the same roadmap section and are nowhere near the same distance out.
 
 One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an Instinct card will work.
 
