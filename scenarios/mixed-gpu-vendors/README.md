@@ -47,6 +47,17 @@ kubectl label node <nvidia-node> gpu-vendor=nvidia --overwrite
 kubectl label node <amd-node>    gpu-vendor=amd    --overwrite
 ```
 
+**`gpu-vendor` is a second axis, not a replacement for `gpu-plugin`.** The other scenarios select on `gpu-plugin` (`hami` vs `nvdp`), which answers a different question — *which of two competing NVIDIA plugins serves this node* — and only matters while both are installed. This one answers *what hardware is here*. A single-vendor cluster mid-migration needs only `gpu-plugin`; a multi-vendor cluster that has finished migrating needs only `gpu-vendor`; a multi-vendor cluster mid-migration needs both, and HAMi's selector should match both:
+
+```yaml
+  nvidiaNodeSelector:
+    gpu: null
+    gpu-vendor: nvidia   # NVIDIA hardware...
+    gpu-plugin: hami     # ...served by HAMi, not nvdp
+```
+
+Both conventions are defined in [`../../docs/reference.md`](../../docs/reference.md#node-labels-this-repo-uses).
+
 Workloads then request whichever vendor they need, and the scheduler places them:
 
 ```yaml

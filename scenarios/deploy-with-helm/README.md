@@ -36,6 +36,8 @@ kubectl label node <node> gpu-plugin=hami --overwrite
 
 Using a dedicated label rather than something like `gpu=on` costs nothing now and is what makes a later migration a one-label operation instead of a chart edit.
 
+`gpu-plugin` is the right axis when HAMi is the only vendor in play. Multi-vendor clusters add a second, `gpu-vendor`; both conventions are defined in [`../../docs/reference.md`](../../docs/reference.md#node-labels-this-repo-uses).
+
 ## Verify
 
 ```sh

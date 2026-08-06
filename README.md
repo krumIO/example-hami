@@ -20,6 +20,14 @@ resources:
 
 It also runs its own scheduler and a mutating webhook that routes GPU pods to it. That webhook is the part most likely to surprise you — read [`docs/prerequisites.md`](docs/prerequisites.md) before installing anything.
 
+## Docs
+
+| | |
+| --- | --- |
+| [`docs/prerequisites.md`](docs/prerequisites.md) | what must be true before installing, and how to verify it |
+| [`docs/how-hami-works.md`](docs/how-hami-works.md) | the mental model — three components, what enforcement means, why plugins collide, what it costs |
+| [`docs/reference.md`](docs/reference.md) | lookup: vendor/version matrix, resource names, annotations, label conventions, chart values, failure signatures |
+
 ## Set up the node prerequisites first
 
 Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, and — on most clusters — pods that name a `runtimeClassName`. See [`docs/prerequisites.md`](docs/prerequisites.md). Skipping this produces a crash loop whose error message blames the host toolkit even when the host is fine.
@@ -49,6 +57,8 @@ The two migration scenarios are a pair: don't run the first on a cluster that ma
 
 ```text
 docs/prerequisites.md                  # driver, toolkit, RuntimeClass, per-node verification
+docs/how-hami-works.md                 # explanation: components, enforcement, trade-offs
+docs/reference.md                      # lookup tables: vendors, values, labels, annotations
 samples/vgpu-smoke-test.yaml           # one pod: proves the memory limit is enforced
 samples/two-pods-one-gpu.yaml          # two pods co-resident on a single card
 scenarios/deploy-with-helm/            # helm install + the values that matter
