@@ -24,7 +24,7 @@ It also runs its own scheduler and a mutating webhook that routes GPU pods to it
 
 Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, and — on most clusters — pods that name a `runtimeClassName`. See [`docs/prerequisites.md`](docs/prerequisites.md). Skipping this produces a crash loop whose error message blames the host toolkit even when the host is fine.
 
-**HAMi virtualizes NVIDIA GPUs, not AMD or Intel ones.** Those can coexist in the same cluster — different vendors advertise different resource names, so their device plugins don't collide — but they need their own tooling, and a node whose only GPU is an AMD or Intel iGPU will break HAMi's plugin if your selector is loose enough to match it. The prerequisites doc covers how hybrid machines mislabel themselves.
+**Check HAMi covers your accelerators before anything else.** It virtualizes NVIDIA GPUs, has backends for a dozen other vendors including AMD (pre-release docs), and does not support Intel at all. Mixed-vendor clusters are fine; the trap is node selection. See [`scenarios/mixed-gpu-vendors/`](scenarios/mixed-gpu-vendors).
 
 ## Pick a scenario
 
@@ -39,6 +39,10 @@ Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, a
 - [`scenarios/migrate-nvidia-to-hami/`](scenarios/migrate-nvidia-to-hami) — cutting over from `nvidia-device-plugin` without a window where GPUs vanish cluster-wide.
 - [`scenarios/migrate-hami-to-nvidia/`](scenarios/migrate-hami-to-nvidia) — going back, and the emergency procedure if HAMi has stopped GPU scheduling.
 
+**More than one kind of accelerator:**
+
+- [`scenarios/mixed-gpu-vendors/`](scenarios/mixed-gpu-vendors) — NVIDIA alongside AMD or Intel, and the hybrid discrete-plus-integrated node that mislabels itself.
+
 The two migration scenarios are a pair: don't run the first on a cluster that matters until you've read the second, because the rollback determines how much risk the cutover actually carries.
 
 ## Layout
@@ -52,6 +56,7 @@ scenarios/deploy-from-rancher-apps/    # Rancher UI / ClusterRepo
 scenarios/deploy-with-fleet/           # Fleet bundle
 scenarios/migrate-nvidia-to-hami/      # cutover, node by node
 scenarios/migrate-hami-to-nvidia/      # rollback and emergency recovery
+scenarios/mixed-gpu-vendors/           # NVIDIA + AMD/Intel, and hybrid nodes
 ```
 
 ## Sizing note
