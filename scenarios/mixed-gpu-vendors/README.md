@@ -67,7 +67,9 @@ Constraints specific to the AMD path, all from [HAMi's AMD guide](https://projec
 
 ## Case 2: NVIDIA under HAMi, another vendor under its own plugin
 
-Intel has no HAMi backend, so its GPUs are served by [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes) instead. Nothing needs to mediate between them — the resource names differ — but two things need attention:
+Intel has no HAMi backend **today**, so its GPUs are served by [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes) instead. It is on the roadmap — "Support Intel GPU device" is listed under [planned features](https://project-hami.io/docs/next/contributor/roadmap#planned-features), undated — so treat this as the current arrangement rather than a permanent one, and keep the per-vendor node labelling below even if Intel is your only non-NVIDIA vendor. When a HAMi Intel backend lands, the migration is a plugin swap on nodes already labelled `gpu-vendor: intel`, not a re-architecture.
+
+Nothing needs to mediate between the two — the resource names differ — but two things need attention:
 
 **HAMi's selector must exclude the Intel nodes.** Its plugin only understands NVIDIA; on an Intel-only node it finds nothing through NVML.
 
@@ -129,7 +131,7 @@ kubectl get node <node> -o json | jq -r '.metadata.annotations | to_entries
 | HAMi plugin Running but registers no devices | node's GPU isn't NVIDIA — likely an iGPU matched by a vendor-blind selector |
 | `amd.com/gpu` capacity flapping | HAMi's AMD plugin and the AMD GPU Operator's native plugin both on the node; disable the operator's |
 | AMD workload starts then fails on a library symbol | image glibc < 2.34; rebuild on a newer base |
-| Intel GPUs invisible to HAMi | expected — no HAMi backend; deploy Intel's plugin alongside |
+| Intel GPUs invisible to HAMi | expected — no HAMi backend yet ([planned](https://project-hami.io/docs/next/contributor/roadmap#planned-features)); deploy Intel's plugin alongside |
 | Pod requests `nvidia.com/gpumem` and stays Pending on a node with GPUs | those GPUs are a different vendor; the request only means something on NVIDIA nodes |
 
 ## Validated

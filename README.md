@@ -24,7 +24,7 @@ It also runs its own scheduler and a mutating webhook that routes GPU pods to it
 
 Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, and — on most clusters — pods that name a `runtimeClassName`. See [`docs/prerequisites.md`](docs/prerequisites.md). Skipping this produces a crash loop whose error message blames the host toolkit even when the host is fine.
 
-**Check HAMi covers your accelerators before anything else.** It virtualizes NVIDIA GPUs, has backends for a dozen other vendors including AMD (pre-release docs), and does not support Intel at all. Mixed-vendor clusters are fine; the trap is node selection. See [`scenarios/mixed-gpu-vendors/`](scenarios/mixed-gpu-vendors).
+**Check HAMi covers your accelerators before anything else.** It virtualizes NVIDIA GPUs, has backends for a dozen other vendors including AMD (documented in the pre-release `next` docs), and does not support Intel yet — that one is [on the roadmap](https://project-hami.io/docs/next/contributor/roadmap#planned-features), undated. Mixed-vendor clusters are fine; the trap is node selection. See [`scenarios/mixed-gpu-vendors/`](scenarios/mixed-gpu-vendors).
 
 ## Pick a scenario
 

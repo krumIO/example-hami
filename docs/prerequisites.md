@@ -11,7 +11,11 @@ HAMi virtualizes **NVIDIA** GPUs, and has per-vendor backends for a set of other
 
 Resource names are `amd.com/gpu`, `amd.com/gpumem`, `amd.com/gpucores`, declared in values under `devices.amd.customresources`. Note the chart's 2.9.0 defaults list `amd.com/gpu-memory` rather than the `amd.com/gpumem` the `next` docs use — the names are configurable, so set them explicitly to match whichever plugin you actually deploy instead of relying on the default.
 
-**Intel is not supported.** There is no `pkg/device/intel`, no `gpu.intel.com` resource anywhere in the source, and no docs page. For Intel Arc/Flex/Gaudi use [Intel's own device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has a separate `sharedDevNum` fractional-sharing mechanism.
+**Intel is not supported yet, but it is planned.** There is no `pkg/device/intel`, no `gpu.intel.com` resource anywhere in the source, and no docs page — but "Support Intel GPU device" appears under planned features on [HAMi's roadmap](https://project-hami.io/docs/next/contributor/roadmap#planned-features), with no version target or date attached. Until it lands, Intel Arc/Flex/Gaudi need [Intel's own device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has a separate `sharedDevNum` fractional-sharing mechanism.
+
+If you're choosing tooling for a fleet that includes Intel accelerators, this is the entry to watch — the coexistence pattern in [`../scenarios/mixed-gpu-vendors/`](../scenarios/mixed-gpu-vendors) is designed so that adopting a future HAMi Intel backend is a plugin swap on those nodes rather than a re-architecture.
+
+Two other roadmap entries worth knowing about when planning: **DRA support** (the chart already ships a `dra.enabled: false` toggle and a `hami-dra` subchart, so this is partly in flight) and **MIG support**. Read the roadmap as direction, not commitment — "Support AMD GPU device" is still listed as planned even though `pkg/device/amd` ships in v2.9.0 and has a `next` guide, so delivered features can lag the list.
 
 One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an Instinct card will work.
 
