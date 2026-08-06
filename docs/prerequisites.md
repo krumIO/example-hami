@@ -2,32 +2,20 @@
 
 ## First: does HAMi cover your accelerators?
 
-HAMi virtualizes **NVIDIA** GPUs. It also has backends for a set of mostly-Chinese accelerators — Cambricon MLU, Hygon DCU, MetaX, Enflame, Kunlunxin, Mthreads, Vastai, Huawei Ascend, Iluvatar — each with its own resource names.
+HAMi virtualizes **NVIDIA** GPUs, and has per-vendor backends for a set of others. The authoritative list is the vendor directories under [`pkg/device/`](https://github.com/Project-HAMi/HAMi/tree/master/pkg/device) in the source — as of v2.9.0: `nvidia`, `amd`, `ascend`, `awsneuron`, `cambricon`, `enflame`, `hygon`, `iluvatar`, `kunlun`, `metax`, `mthreads`, `vastai`, with `biren` added since.
 
-**AMD (ROCm) and Intel are not among them.** Chart 2.9.0 lists `amd.com/gpu` under `devices:` as a resource set it can be made aware of, but there is no AMD virtualization backend and no top-level `amdResourceName` the way there is for the vendors above. Intel appears nowhere in the chart at all. If your accelerators are AMD Instinct/Radeon or Intel Arc/Flex/Gaudi, HAMi is the wrong tool — look at the AMD GPU Operator or [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has its own `sharedDevNum` fractional-sharing mechanism.
+**AMD is supported** — see [Enable AMD GPU sharing](https://project-hami.io/docs/next/userguide/amd-device/enable-amd-gpu-sharing). Two caveats worth knowing before you plan around it:
 
-One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an AMD card will work.
+- That page is in the **`next` (unreleased) docs**; there is no equivalent page under the stable docs for v2.9.0, even though `pkg/device/amd` ships in the v2.9.0 tag. Treat the documented workflow as pre-release.
+- It needs **AMD Instinct/ROCm** hardware (validated against ROCm 7.0.2, MI300X VF in the worked example), the **AMD GPU Operator with its native device-plugin disabled**, and HAMi's own `amd-device-plugin` (chart/image 0.0.1+). Workload images must have **glibc ≥ 2.34** — Ubuntu 20.04, RHEL 8, and musl/Alpine images are explicitly unsupported.
 
-### Mixed-vendor clusters are fine; mixed-vendor *selectors* are not
+Resource names are `amd.com/gpu`, `amd.com/gpumem`, `amd.com/gpucores`, declared in values under `devices.amd.customresources`. Note the chart's 2.9.0 defaults list `amd.com/gpu-memory` rather than the `amd.com/gpumem` the `next` docs use — the names are configurable, so set them explicitly to match whichever plugin you actually deploy instead of relying on the default.
 
-Different vendors advertise different resource names, so their device plugins don't collide. An AMD plugin serving `amd.com/gpu` and HAMi serving `nvidia.com/gpu` coexist happily on the same node — unlike two plugins both claiming `nvidia.com/gpu`, which is the conflict the [migration scenarios](../scenarios/migrate-nvidia-to-hami/) exist to manage.
+**Intel is not supported.** There is no `pkg/device/intel`, no `gpu.intel.com` resource anywhere in the source, and no docs page. For Intel Arc/Flex/Gaudi use [Intel's own device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has a separate `sharedDevNum` fractional-sharing mechanism.
 
-The real hazard is **node selection**. HAMi's device plugin only understands NVIDIA hardware; land it on a node whose only GPU is an AMD or Intel one and it finds nothing through NVML and fails. So the selector you give `devicePlugin.nvidiaNodeSelector` has to mean "this node has an NVIDIA GPU", not "this node has a GPU".
+One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an Instinct card will work.
 
-That's harder than it sounds, because **generic GPU labellers describe the wrong device on hybrid machines.** A labeller that enumerates PCI devices and reports the first one will describe the *integrated* GPU — the one in the CPU package — and never mention the discrete card:
-
-```text
-gpu-count      1
-gpu0-driver    amdgpu
-gpu0-vendor    Advanced-Micro-Devices-Inc.-AMD-ATI
-gpu0-product   Renoir-Radeon-Vega-Series-Radeon-Vega-Mobile-Series
-```
-
-That is a real node with a discrete NVIDIA card in it, running NVIDIA workloads. The labels describe the Ryzen APU's iGPU; the accelerator you care about isn't represented at all. A selector of `gpu0-vendor=NVIDIA...` would match zero nodes, and `gpu-count: 1` undercounts. Consequences to plan around:
-
-- **Select on a label you control** (`gpu-plugin=hami`, or a pool label your provisioner sets), never on a vendor label emitted by autodiscovery.
-- **`nvidia-smi` is the source of truth** for what NVIDIA can see. An iGPU is invisible to NVML, so the driver's device count and any generic `gpu-count` label legitimately disagree.
-- **Watch the control plane.** Nodes with only an Intel iGPU can pick up a generic `gpu`-ish label from the same labeller. If HAMi's selector is loose enough to match them, its plugin schedules there and crash-loops.
+If your cluster has more than one vendor in it, read [`../scenarios/mixed-gpu-vendors/`](../scenarios/mixed-gpu-vendors) — coexistence is straightforward, but node selection is where it goes wrong.
 
 ## The four requirements
 
