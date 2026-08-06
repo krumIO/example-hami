@@ -60,7 +60,7 @@ kubectl logs vgpu-smoke-test
 
 You want the container to report its **limit**, not the card's real memory:
 
-```
+```text
 name, memory.total [MiB]
 NVIDIA GeForce RTX 2060 with Max-Q Design, 1024 MiB
 ```

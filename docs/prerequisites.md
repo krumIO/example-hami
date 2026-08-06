@@ -1,22 +1,25 @@
 # Prerequisites
 
-HAMi's device plugin talks to NVML. Everything below exists to make sure it can. When it can't, the plugin crash-loops with a message that sends you to the wrong place:
+Four things must be true before HAMi will work. Three are about the nodes; the fourth is a decision you make at install time.
 
-```
-E factory.go:135] Incompatible strategy detected auto
-E factory.go:136] If this is a GPU node, did you configure the NVIDIA Container Toolkit?
-E main.go:201] failed to construct resource managers: invalid device discovery strategy
-```
+| | Requirement | Verify with |
+| --- | --- | --- |
+| 1 | NVIDIA driver + container toolkit on every GPU node | `nvidia-smi` on the host |
+| 2 | A `RuntimeClass` the cluster can select the NVIDIA runtime with | `kubectl get runtimeclass nvidia` |
+| 3 | Each GPU node can actually honour that RuntimeClass | the probe pod in §3 |
+| 4 | A decision about the admission webhook | §4 |
 
-That names the toolkit, so the natural reaction is to go check the host. The host is usually fine — the pod just isn't running under the NVIDIA runtime.
+Everything HAMi's device plugin does depends on reaching NVML, and 1–3 are what make that possible.
 
-## On the node
+## 1. Driver and container toolkit
 
-Each GPU node needs the **NVIDIA driver** and the **container toolkit** (`nvidia-container-runtime`). How they get there is distribution-specific: baked into the OS image, installed by the GPU Operator, or a package install. On RKE2, when the toolkit is present at startup RKE2 detects it, writes the runtime into its own containerd config, and the `nvidia` handler becomes usable.
+Each GPU node needs the **NVIDIA driver** and the **container toolkit** (`nvidia-container-runtime`). How they get there is distribution-specific — baked into the OS image, installed by the NVIDIA GPU Operator, or a package install.
 
-## The RuntimeClass
+On RKE2, if the toolkit is present when the node starts, RKE2 detects it, writes the runtime into its own containerd config, and the `nvidia` handler becomes usable. No further configuration needed.
 
-Most clusters leave `runc` as the default runtime and select the NVIDIA one per pod. That means a `RuntimeClass` must exist:
+## 2. The RuntimeClass
+
+Most clusters leave `runc` as the default runtime and select the NVIDIA one per pod. That requires a `RuntimeClass` object:
 
 ```yaml
 apiVersion: node.k8s.io/v1
@@ -30,24 +33,30 @@ handler: nvidia
 kubectl get runtimeclass nvidia
 ```
 
-and every GPU-touching pod — **including the device plugin itself** — must name it:
+Some distributions create this for you; RKE2 configures the containerd runtime but does not create the Kubernetes object, so on RKE2 you apply it yourself.
+
+Every GPU-touching pod then has to name it, **including HAMi's own device plugin**. The chart ships `devicePlugin.runtimeClassName: ""`, which is the most common reason a first install fails, so set it to the name of the RuntimeClass from above:
+
+```yaml
+devicePlugin:
+  runtimeClassName: nvidia   # must match metadata.name of the RuntimeClass
+  createRuntimeClass: false  # the cluster owns that object, not the chart
+```
+
+Leave `runtimeClassName` empty **only** if your cluster's default runtime is already `nvidia` — that is, if a pod with no `runtimeClassName` at all can already see a GPU. If you're unsure, set it to `nvidia`: naming a RuntimeClass that a node can honour is never wrong.
+
+Your own GPU workloads need the same field:
 
 ```yaml
 spec:
   runtimeClassName: nvidia
 ```
 
-HAMi's chart leaves `devicePlugin.runtimeClassName` empty by default, which is the single most common reason a first install fails. Set it unless your cluster's default runtime is already `nvidia`.
+## 3. Verify each node, not just the cluster
 
-## Verify per node, not per cluster
+`RuntimeClass` is cluster-scoped, so its existence says nothing about whether a *given* node can honour it. A node rebuilt in the last hour can carry every GPU label your tooling assigns and still have no `nvidia` runtime in containerd — labels come from the machine pool, the runtime comes from the OS image, and they arrive at different times.
 
-The RuntimeClass is a cluster-scoped object; its existence says nothing about whether a given node can honour it. A node that was recently rebuilt can carry every GPU label your tooling assigns and still have no `nvidia` runtime in containerd — the labels come from the machine pool, the runtime comes from the OS image, and they arrive at different times. The symptom is not a crash loop but a pod that never starts:
-
-```
-Failed to create pod sandbox: no runtime for "nvidia" is configured
-```
-
-Both HAMi and `nvidia-device-plugin` fail identically here, so it's worth ruling out before blaming either. The cheapest check is to actually run something:
+Run something and see:
 
 ```sh
 kubectl run rt-probe --rm -it --restart=Never --image=busybox \
@@ -55,31 +64,76 @@ kubectl run rt-probe --rm -it --restart=Never --image=busybox \
   -- true
 ```
 
-If that returns cleanly, the node can host a GPU plugin. If it hangs in `ContainerCreating` with the sandbox error, the node's NVIDIA enablement hasn't finished — fix that first.
+Clean exit means the node can host a GPU plugin. If it hangs in `ContainerCreating` with `no runtime for "nvidia" is configured`, that node's NVIDIA enablement hasn't finished — fix it before installing, because neither HAMi nor `nvidia-device-plugin` can run there.
 
-## Know what the webhook does before you install
+Repeat per GPU node. This is the check most worth doing: it costs seconds and rules out the failure that looks most like a HAMi bug.
+
+## 4. Decide the webhook setting before installing
 
 HAMi ships a `MutatingWebhookConfiguration` (`vgpu.hami.io`) that rewrites `schedulerName` to `hami-scheduler` on **any** pod requesting GPU resources, cluster-wide, from the moment the chart is installed. Its selectors exclude only objects labelled `hami.io/webhook: ignore`, so by default it catches everything.
 
-Two consequences worth internalising:
+Two properties make this worth deciding deliberately rather than accepting the default:
 
-It takes effect **whether or not HAMi's device plugin works**. Install the chart with a broken plugin and every GPU pod in the cluster is redirected to a scheduler that has no registered devices, so they sit `Pending` with no obvious cause. The device plugin crash-looping in `kube-system` is easy to miss; the outage it causes is cluster-wide.
+It takes effect **whether or not the device plugin works**. Install with a broken plugin and every GPU pod in the cluster is redirected to a scheduler with no registered devices — they sit `Pending` with no obvious cause, while the chart reports a healthy install and the crash-looping DaemonSet goes unnoticed in `kube-system`.
 
-Its `failurePolicy: Ignore` does **not** protect you. That governs what happens when the webhook is unreachable, not when it succeeds. A successful mutation into a broken scheduler is still a successful mutation.
+Its `failurePolicy: Ignore` does **not** protect you. That governs what happens when the webhook is *unreachable*, not when it succeeds. A successful mutation into a broken scheduler is still a successful mutation.
 
-During a phased rollout, either disable it (`scheduler.admissionWebhook.enabled: false`) and set `schedulerName: hami-scheduler` explicitly on migrated workloads, or leave it on and label the namespaces that aren't ready yet:
+**Pick one:**
+
+*Every GPU node will run HAMi* — leave it on:
+
+```yaml
+scheduler:
+  admissionWebhook:
+    enabled: true
+```
+
+*Some nodes will keep `nvidia-device-plugin`, or you're migrating in stages* — turn it off, and name the scheduler explicitly on the workloads you move:
+
+```yaml
+scheduler:
+  admissionWebhook:
+    enabled: false
+```
+
+```yaml
+# in each migrated workload's pod spec
+spec:
+  schedulerName: hami-scheduler
+```
+
+The middle option, if you'd rather keep the webhook on during a staged rollout, is to exempt the namespaces that aren't ready yet and remove the label as each one migrates:
 
 ```sh
 kubectl label namespace <ns> hami.io/webhook=ignore --overwrite
 ```
 
-## One more thing that will confuse you
+## Reading a healthy install
 
-`nvidia.com/gpumem` and `nvidia.com/gpucores` never appear in a node's `allocatable`. The device plugin advertises only the multiplied `nvidia.com/gpu` count; memory and core accounting live in a node annotation that HAMi's scheduler-extender reads:
+Once installed, these are the signals that mean it worked — knowing them prevents chasing a problem that isn't there.
 
 ```sh
+kubectl -n kube-system get pods -o wide | grep hami-device-plugin   # Running, not restarting
 kubectl get node <node> -o jsonpath='{.metadata.annotations.hami\.io/node-nvidia-register}{"\n"}'
-# [{"id":"GPU-...","count":10,"devmem":6144,"devcore":100,"type":"NVIDIA GeForce RTX 2060...","health":true}]
+kubectl get node <node> -o jsonpath='{.status.allocatable.nvidia\.com/gpu}{"\n"}'
 ```
 
-Checking `allocatable` for `gpumem` and finding it missing will convince you a working install is broken. Check the annotation instead.
+The annotation is where per-card detail lives:
+
+```text
+[{"id":"GPU-...","count":10,"devmem":6144,"devcore":100,"type":"NVIDIA GeForce RTX 2060...","health":true}]
+```
+
+`count` is your `deviceSplitCount`, `devmem` the card's real memory in MiB. Allocatable `nvidia.com/gpu` should read physical cards × `deviceSplitCount`.
+
+**`nvidia.com/gpumem` and `nvidia.com/gpucores` never appear in `allocatable`.** The device plugin advertises only the multiplied `nvidia.com/gpu` count; memory and core accounting live in that annotation, which HAMi's scheduler-extender reads at scheduling time. Looking for `gpumem` in `kubectl describe node` and not finding it will convince you a working install is broken.
+
+## If verification fails
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Plugin `CrashLoopBackOff`, log says `invalid device discovery strategy` / `Incompatible strategy detected auto` | pod is running under `runc` and can't reach NVML — the message blames the toolkit, but the host is usually fine | set `devicePlugin.runtimeClassName: nvidia` (§2) |
+| Pod stuck `ContainerCreating`, `no runtime for "nvidia" is configured` | that node has no NVIDIA runtime in containerd | finish node enablement (§1); affects both plugins identically |
+| DaemonSet `DESIRED 0` | node selector matches nothing | check the labels, and that `helm template` rendered the selector you expected |
+| GPU pods `Pending` on `hami-scheduler`, no events | webhook is live but no node has a registered device | fix the plugin, or disable the webhook (§4) |
+| Allocatable GPU count flapping | two device plugins on one node | give them disjoint node selectors |

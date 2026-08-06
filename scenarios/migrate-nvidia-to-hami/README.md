@@ -10,7 +10,7 @@ Both plugins register the resource name `nvidia.com/gpu` with kubelet. Kubelet's
 
 They conflict **per node, not per cluster**. Two DaemonSets with disjoint node selectors coexist happily — which is the whole basis of this procedure. Put both plugins behind the same label with different values:
 
-```
+```text
 gpu-plugin=nvdp   ->  nvidia-device-plugin
 gpu-plugin=hami   ->  HAMi
 ```
