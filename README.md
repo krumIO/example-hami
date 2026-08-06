@@ -20,10 +20,15 @@ resources:
 
 It also runs its own scheduler and a mutating webhook that routes GPU pods to it. That webhook is the part most likely to surprise you — read [`docs/prerequisites.md`](docs/prerequisites.md) before installing anything.
 
+## New to HAMi? Start with the tutorial
+
+[`docs/tutorial.md`](docs/tutorial.md) — about 20 minutes on a scratch cluster, ending with two pods running on one physical GPU with different enforced memory limits. It installs the stock plugin first so you can see the limitation before you fix it, and puts everything back at the end. No decisions to make.
+
 ## Docs
 
 | | |
 | --- | --- |
+| [`docs/tutorial.md`](docs/tutorial.md) | learn by doing: one GPU, two pods, start to finish |
 | [`docs/prerequisites.md`](docs/prerequisites.md) | what must be true before installing, and how to verify it |
 | [`docs/how-hami-works.md`](docs/how-hami-works.md) | the mental model — three components, what enforcement means, why plugins collide, what it costs |
 | [`docs/reference.md`](docs/reference.md) | lookup: vendor/version matrix, resource names, annotations, label conventions, chart values, failure signatures |
@@ -56,6 +61,7 @@ The two migration scenarios are a pair: don't run the first on a cluster that ma
 ## Layout
 
 ```text
+docs/tutorial.md                       # 20-minute guided first run, self-contained
 docs/prerequisites.md                  # driver, toolkit, RuntimeClass, per-node verification
 docs/how-hami-works.md                 # explanation: components, enforcement, trade-offs
 docs/reference.md                      # lookup tables: vendors, values, labels, annotations

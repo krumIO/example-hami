@@ -2,6 +2,8 @@
 
 The baseline install, and the reference for the values every other scenario reuses. Read [`../../docs/prerequisites.md`](../../docs/prerequisites.md) first — most first-install failures are node enablement, not chart configuration.
 
+If you've not used HAMi before, [`../../docs/tutorial.md`](../../docs/tutorial.md) walks the same ground on a scratch cluster with nothing to decide, and takes about 20 minutes. This page assumes you know what you want.
+
 This assumes a cluster with **no** GPU device plugin currently running. If `nvidia-device-plugin` is already serving GPUs to real workloads, use [`../migrate-nvidia-to-hami/`](../migrate-nvidia-to-hami) instead: the two plugins cannot share a node, and installing on top of a running one gives you flapping capacity rather than a clean cutover.
 
 ## Install
