@@ -4,18 +4,28 @@
 
 HAMi virtualizes **NVIDIA** GPUs, and has per-vendor backends for a set of others. The authoritative list is the vendor directories under [`pkg/device/`](https://github.com/Project-HAMi/HAMi/tree/master/pkg/device) in the source — as of v2.9.0: `nvidia`, `amd`, `ascend`, `awsneuron`, `cambricon`, `enflame`, `hygon`, `iluvatar`, `kunlun`, `metax`, `mthreads`, `vastai`, with `biren` added since.
 
-**AMD is supported** — see [Enable AMD GPU sharing](https://project-hami.io/docs/next/userguide/amd-device/enable-amd-gpu-sharing). Two caveats worth knowing before you plan around it:
+**AMD is supported, but not in any released version yet** — see [Enable AMD GPU sharing](https://project-hami.io/docs/next/userguide/amd-device/enable-amd-gpu-sharing). The version picture, as of 2026-08-06:
 
-- That page is in the **`next` (unreleased) docs**; there is no equivalent page under the stable docs for v2.9.0, even though `pkg/device/amd` ships in the v2.9.0 tag. Treat the documented workflow as pre-release.
-- It needs **AMD Instinct/ROCm** hardware (validated against ROCm 7.0.2, MI300X VF in the worked example), the **AMD GPU Operator with its native device-plugin disabled**, and HAMi's own `amd-device-plugin` (chart/image 0.0.1+). Workload images must have **glibc ≥ 2.34** — Ubuntu 20.04, RHEL 8, and musl/Alpine images are explicitly unsupported.
+| | |
+| --- | --- |
+| Latest stable release | **v2.9.0** (2026-05-19) |
+| AMD vGPU support | merged to `master` **2026-08-03** ([PR #2290](https://github.com/Project-HAMi/HAMi/pull/2290), `feat(amd): support amd vgpu`) — after v2.9.0 was cut |
+| Target release | **none published** — the PR carries no milestone, and no milestone exists for the next minor |
+| Docs | `next` channel only; the stable v2.9.0 path 404s |
+
+So using it today means running `master` or building from it. Don't be misled by `pkg/device/amd` existing in the v2.9.0 tag — it does, but it's a partial implementation that predates the sharing feature (7.5 KB there vs 13 KB on `master`), so a v2.9.0 deployment will not give you AMD vGPU. HAMi's minors have landed roughly quarterly (v2.7.0 Sep 2025, v2.8.0 Jan 2026, v2.9.0 May 2026), which would put the next one within a few months — that's a cadence extrapolation, not a commitment from the project.
+
+Requirements once it is available: **AMD Instinct/ROCm** hardware (validated against ROCm 7.0.2, MI300X VF in the worked example), the **AMD GPU Operator with its native device-plugin disabled**, and HAMi's own `amd-device-plugin` (chart/image 0.0.1+). Workload images must have **glibc ≥ 2.34** — Ubuntu 20.04, RHEL 8, and musl/Alpine images are explicitly unsupported.
 
 Resource names are `amd.com/gpu`, `amd.com/gpumem`, `amd.com/gpucores`, declared in values under `devices.amd.customresources`. Note the chart's 2.9.0 defaults list `amd.com/gpu-memory` rather than the `amd.com/gpumem` the `next` docs use — the names are configurable, so set them explicitly to match whichever plugin you actually deploy instead of relying on the default.
 
-**Intel is not supported yet, but it is planned.** There is no `pkg/device/intel`, no `gpu.intel.com` resource anywhere in the source, and no docs page — but "Support Intel GPU device" appears under planned features on [HAMi's roadmap](https://project-hami.io/docs/next/contributor/roadmap#planned-features), with no version target or date attached. Until it lands, Intel Arc/Flex/Gaudi need [Intel's own device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has a separate `sharedDevNum` fractional-sharing mechanism.
+**Intel is not supported, and is further out than AMD.** "Support Intel GPU device" appears under planned features on [HAMi's roadmap](https://project-hami.io/docs/next/contributor/roadmap#planned-features), but that is the only trace of it: no `pkg/device/intel`, no `gpu.intel.com` resource anywhere in the source, no docs page, and — as of 2026-08-06 — **no issue, pull request, or milestone** tracking the work. There is no target version to quote, and nothing in flight to watch merge. Contrast AMD, which has a merged PR and `next` docs; Intel has neither.
+
+Intel Arc/Flex/Gaudi therefore need [Intel's own device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes), whose i915 plugin has a separate `sharedDevNum` fractional-sharing mechanism, and should be planned for as the long-term arrangement rather than a stopgap.
 
 If you're choosing tooling for a fleet that includes Intel accelerators, this is the entry to watch — the coexistence pattern in [`../scenarios/mixed-gpu-vendors/`](../scenarios/mixed-gpu-vendors) is designed so that adopting a future HAMi Intel backend is a plugin swap on those nodes rather than a re-architecture.
 
-Two other roadmap entries worth knowing about when planning: **DRA support** (the chart already ships a `dra.enabled: false` toggle and a `hami-dra` subchart, so this is partly in flight) and **MIG support**. Read the roadmap as direction, not commitment — "Support AMD GPU device" is still listed as planned even though `pkg/device/amd` ships in v2.9.0 and has a `next` guide, so delivered features can lag the list.
+Two other roadmap entries worth knowing about when planning: **DRA support** (the chart already ships a `dra.enabled: false` toggle and a `hami-dra` subchart, so this is partly in flight) and **MIG support**. Read the roadmap as direction, not commitment, and in both directions — "Support AMD GPU device" is still listed as planned although the code has merged, so entries lag delivery as well as precede it. Check for a merged PR before assuming a roadmap item is far off, and check the release tags before assuming a merged PR is usable.
 
 One name worth not misreading: **Hygon DCU is not AMD.** It's separate silicon with AMD-derived heritage, and `hygon.com/dcunum` says nothing about whether an Instinct card will work.
 

@@ -57,6 +57,8 @@ resources:
     amd.com/gpucores: 30
 ```
 
+**Version gate:** AMD vGPU is not in a released HAMi yet. It merged to `master` on 2026-08-03 ([PR #2290](https://github.com/Project-HAMi/HAMi/pull/2290)), after v2.9.0 (2026-05-19) was cut, with no milestone and so no published target release. Running this today means running `master`. The `pkg/device/amd` directory in the v2.9.0 tag is an earlier partial implementation and will not give you sharing.
+
 Constraints specific to the AMD path, all from [HAMi's AMD guide](https://project-hami.io/docs/next/userguide/amd-device/enable-amd-gpu-sharing) — that page is in the **`next` (unreleased)** docs, so treat this as pre-release:
 
 - AMD Instinct/ROCm hardware; validated against ROCm 7.0.2, MI300X VF in the worked example.
@@ -67,7 +69,9 @@ Constraints specific to the AMD path, all from [HAMi's AMD guide](https://projec
 
 ## Case 2: NVIDIA under HAMi, another vendor under its own plugin
 
-Intel has no HAMi backend **today**, so its GPUs are served by [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes) instead. It is on the roadmap — "Support Intel GPU device" is listed under [planned features](https://project-hami.io/docs/next/contributor/roadmap#planned-features), undated — so treat this as the current arrangement rather than a permanent one, and keep the per-vendor node labelling below even if Intel is your only non-NVIDIA vendor. When a HAMi Intel backend lands, the migration is a plugin swap on nodes already labelled `gpu-vendor: intel`, not a re-architecture.
+Intel has no HAMi backend, so its GPUs are served by [Intel's device plugins](https://github.com/intel/intel-device-plugins-for-kubernetes) instead. It is on the roadmap — "Support Intel GPU device" under [planned features](https://project-hami.io/docs/next/contributor/roadmap#planned-features) — but with **no target version and nothing in flight**: as of 2026-08-06 there is no `pkg/device/intel`, no issue, no PR, and no milestone. Plan for Intel's own plugins as the arrangement you'll be running for the foreseeable future, not a stopgap measured in months.
+
+That said, the per-vendor node labelling below costs nothing now and makes a future swap cheap — if a HAMi Intel backend does land, nodes already labelled `gpu-vendor: intel` change plugin rather than architecture.
 
 Nothing needs to mediate between the two — the resource names differ — but two things need attention:
 
@@ -131,7 +135,7 @@ kubectl get node <node> -o json | jq -r '.metadata.annotations | to_entries
 | HAMi plugin Running but registers no devices | node's GPU isn't NVIDIA — likely an iGPU matched by a vendor-blind selector |
 | `amd.com/gpu` capacity flapping | HAMi's AMD plugin and the AMD GPU Operator's native plugin both on the node; disable the operator's |
 | AMD workload starts then fails on a library symbol | image glibc < 2.34; rebuild on a newer base |
-| Intel GPUs invisible to HAMi | expected — no HAMi backend yet ([planned](https://project-hami.io/docs/next/contributor/roadmap#planned-features)); deploy Intel's plugin alongside |
+| Intel GPUs invisible to HAMi | expected — no HAMi backend ([roadmap only](https://project-hami.io/docs/next/contributor/roadmap#planned-features), no target version); deploy Intel's plugin alongside |
 | Pod requests `nvidia.com/gpumem` and stays Pending on a node with GPUs | those GPUs are a different vendor; the request only means something on NVIDIA nodes |
 
 ## Validated
