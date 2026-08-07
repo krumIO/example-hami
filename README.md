@@ -44,7 +44,7 @@ Every scenario needs the NVIDIA driver and container toolkit on the GPU nodes, a
 **Installing:**
 
 - [`scenarios/deploy-with-helm/`](scenarios/deploy-with-helm) — the baseline. Start here even if you intend to use one of the others; the values are the same everywhere and this is where they're explained.
-- [`scenarios/deploy-from-rancher-apps/`](scenarios/deploy-from-rancher-apps) — the same install through the Rancher UI, plus the `ClusterRepo` CR if you'd rather not click.
+- [`scenarios/deploy-from-rancher-apps/`](scenarios/deploy-from-rancher-apps) — the same install through the Rancher UI, with screenshots, plus the `ClusterRepo` CR if you'd rather not click. Read its step 2 before using the UI: its values editor behaves unlike `helm -f` and will fail the install if treated the same way.
 - [`scenarios/deploy-with-fleet/`](scenarios/deploy-with-fleet) — GitOps delivery to one or many downstream clusters.
 
 **Migrating a cluster that already has GPUs in use:**

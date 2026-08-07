@@ -28,6 +28,8 @@ helm template hami hami-charts/hami --version 2.9.0 -f values.yaml \
   | grep -A4 'nodeSelector:'
 ```
 
+This `gpu: null` idiom is specific to the CLI. In [the Rancher UI](../deploy-from-rancher-apps/) you replace the `gpu: 'on'` line outright instead — Rancher already nulls anything you remove, which is its own hazard.
+
 ## Label the GPU nodes
 
 The DaemonSet won't schedule anywhere until nodes match the selector:
