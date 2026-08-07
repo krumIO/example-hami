@@ -32,6 +32,8 @@ This is worth rehearsing, because the failure it fixes is easy to cause by accid
 
 ### 0. Find workloads that depend on HAMi-only resources
 
+**Search the controllers, not just the pods.** The admission webhook injects `schedulerName` *and* default resource requests (`gpucores`, `gpumem`) into pods at admission time, so a running pod can carry HAMi-only resources its Deployment never declared. Find such a pod but no matching controller spec and nothing is wrong with your manifests — you're looking at a pod admitted while the webhook was live. It needs recreating (step 6), not editing.
+
 ```sh
 kubectl get pods -A -o json | jq -r '
   .items[] | select([.spec.containers[].resources.limits // {} | keys[]]
@@ -152,9 +154,13 @@ done
 
 A node where HAMi never successfully registered has none of these.
 
-### 6. Recreate the workloads
+### 6. Recreate every GPU workload
 
-Anything still carrying `schedulerName: hami-scheduler` is unschedulable now. Apply the step 0 edits and restart:
+Easy to skip, because **nothing looks broken**. Pods already running when HAMi left keep running — they're bound to a node, and Kubernetes doesn't re-verify scheduling or resources for a running pod. What they carry is stale: a `schedulerName` pointing at a scheduler that no longer exists, and possibly injected resource requests nothing advertises any more.
+
+They aren't time bombs. Delete one and its controller recreates it from a clean template, and the replacement schedules normally. But until they turn over, the cluster contains pods whose spec can't be reproduced from any manifest — and any controller edits you made in step 0 aren't live yet.
+
+Apply the step 0 edits and restart everything that requested a GPU while the webhook was enabled:
 
 ```sh
 kubectl rollout restart deployment -n <ns> <name>
@@ -169,7 +175,9 @@ kubectl get pods -A -o json | jq -r '.items[]
 | Symptom | Cause |
 |---|---|
 | Pending, `insufficient nvidia.com/gpumem` | workload still requests HAMi-only resources; step 0 skipped |
-| Pending with `schedulerName: hami-scheduler` after uninstall | pods predate the change; `schedulerName` is immutable, delete them |
+| **Pending** with `schedulerName: hami-scheduler` after uninstall | pods predate the change; `schedulerName` is immutable, delete them |
+| **Running** with `schedulerName: hami-scheduler` after uninstall | harmless fossils — already bound, templates are clean; recreate at your convenience (step 6) |
+| A pod requests `gpucores`/`gpumem` but no controller spec does | webhook-injected at admission; recreate the pod, don't hunt for a manifest to fix |
 | Fewer pods fit than before | expected — sharing is gone, each pod needs a whole card |
 | Count still shows the split after relabel | HAMi's plugin is still on the node; check the selector actually changed |
 | Stock plugin CrashLoopBackOff after reinstall | missing `runtimeClassName: nvidia`, same root cause as the forward direction |
@@ -179,3 +187,5 @@ kubectl get pods -A -o json | jq -r '.items[]
 Executed on RKE2 + SL Micro under Rancher, rolling three nodes back from HAMi 2.9.0. Capacity returned to `nvidia.com/gpu: 1` within seconds of each relabel. Every node that had registered with HAMi retained `hami.io/node-nvidia-register` and `hami.io/node-handshake` after `helm uninstall` — step 5 is not optional housekeeping.
 
 The emergency short version is not hypothetical: it's what was run when a default-values HAMi install took GPU scheduling down on a live cluster.
+
+**Steps 0 and 6 were skipped in that run**, and finding the consequence two days later is why they read as they do now. A predictor pod admitted during the ~40 minutes the webhook was enabled was still running afterwards carrying `schedulerName: hami-scheduler` and an injected `nvidia.com/gpucores: 100`, while its Deployment and ReplicaSet templates carried neither — and it kept serving traffic throughout. Step 0's search would have found nothing to fix, because the pollution existed only in the live pod. That is exactly the case the step-0 note now covers.
