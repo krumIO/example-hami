@@ -23,6 +23,16 @@ Both directions on a cluster with running workloads, with no window where GPUs v
 **5. [Your GPU labels are lying to you](blog/05-labels-are-lying.md)**
 Every node in our GPU cluster reported itself as AMD or Intel. All the GPUs we care about are NVIDIA. What autodiscovery actually describes on a hybrid machine, how that interacts with vendor-specific device plugins, and where AMD and Intel really stand in HAMi today (one is further along than the docs suggest; the other is further behind).
 
+### And a Rancher-specific pair
+
+These two cover delivery rather than HAMi itself, and can be read on their own if Rancher is your platform. Both assume the model from part 1 and the hazard from part 3.
+
+**6. [HAMi on Rancher: the click-through path](blog/06-hami-on-rancher-manual.md)**
+The Apps and Charts walkthrough end to end, with annotated screenshots of every edit. Mostly about what Rancher's UI tells you and what it does not: *Deployed* appears while the device plugin is crash-looping, nothing happens until you label a node, and `kubectl delete app` leaves the Helm release running.
+
+**7. [HAMi on Rancher with Fleet](blog/07-hami-on-rancher-fleet.md)**
+GitOps delivery, and the one thing Fleet cannot express — an ordered uninstall-then-install. The workaround turns out to be the same node-label partition that makes migrations safe, which is usually a sign the design is right. Includes why we did not need to pause Fleet during a hand-driven install, and how we checked.
+
 ## What was actually tested
 
 Everything in these posts happened on `dev-machines`: RKE2 on SUSE Linux Micro, managed by Rancher v2.14.3, three GPU worker nodes with 6 GB Turing cards, HAMi 2.9.0. Dates are in the posts where they matter.

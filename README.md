@@ -26,7 +26,7 @@ It also runs its own scheduler and a mutating webhook that routes GPU pods to it
 
 ## Write-up
 
-[`blog.md`](blog.md) is a five-part field report: what HAMi does and what it costs, the install that broke GPU scheduling cluster-wide, why Rancher's values editor is not `helm -f`, migrating a live cluster both directions, and why our GPU labels all said AMD. Narrative rather than instructions — the docs below are the instructions.
+[`blog.md`](blog.md) is a seven-part field report: what HAMi does and what it costs, the install that broke GPU scheduling cluster-wide, why Rancher's values editor is not `helm -f`, migrating a live cluster both directions, and why our GPU labels all said AMD — plus a Rancher-specific pair on installing through the UI and through Fleet. Narrative rather than instructions; the docs below are the instructions.
 
 ## Docs
 
