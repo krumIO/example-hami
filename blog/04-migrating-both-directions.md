@@ -1,6 +1,6 @@
 # Migrating a live cluster to HAMi, and back
 
-*Part 4 of [a five-part field report](../blog.md). Both directions, on a cluster with workloads running, in a single afternoon.*
+*Part 4 of [a seven-part field report](../blog.md). Both directions, on a cluster with workloads running, in a single afternoon.*
 
 The clean-install case is the easy one. The real question is what you do on a cluster where GPUs are already in use and `nvidia-device-plugin` is already serving them — and, just as importantly, how you get back out if you change your mind.
 

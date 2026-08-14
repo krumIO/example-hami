@@ -1,6 +1,6 @@
 # The install that quietly broke every GPU pod
 
-*Part 2 of [a five-part field report](../blog.md). [Part 1](01-what-hami-does.md) covers the three components; this post is about what happens when one of them starts working before the others.*
+*Part 2 of [a seven-part field report](../blog.md). [Part 1](01-what-hami-does.md) covers the three components; this post is about what happens when one of them starts working before the others.*
 
 Somebody installed HAMi on `dev-machines` with `helm install` and chart defaults. Helm reported success. The app showed as deployed. A week later we came back to look at something unrelated and found that GPU scheduling had been broken the entire time.
 

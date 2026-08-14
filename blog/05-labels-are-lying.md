@@ -1,6 +1,6 @@
 # Your GPU labels are lying to you
 
-*Part 5 of [a five-part field report](../blog.md). The shortest post, and the one most likely to apply to you even if you never touch HAMi.*
+*Part 5 of [a seven-part field report](../blog.md). The shortest post, and the one most likely to apply to you even if you never touch HAMi.*
 
 While writing the mixed-vendor guidance we did the obvious sanity check: list the GPU nodes and their vendors. Here is what `dev-machines` said about itself.
 
@@ -84,4 +84,6 @@ What breaks is selection. And selection breaks because the labels lie.
 
 ---
 
-That is the series. The [repo](../README.md) has the runbooks, the annotated screenshots, and the samples if you want to try any of it. The [tutorial](../docs/tutorial.md) is about twenty minutes on a scratch cluster and ends with two pods sharing one card.
+That is the end of the general field report. Two Rancher-specific posts follow if that is your platform: [the click-through path](06-hami-on-rancher-manual.md) and [delivery with Fleet](07-hami-on-rancher-fleet.md).
+
+Otherwise, the [repo](../README.md) has the runbooks and samples, and the [tutorial](../docs/tutorial.md) is about twenty minutes on a scratch cluster, ending with two pods sharing one card.

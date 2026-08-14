@@ -1,6 +1,6 @@
 # Rancher's values editor is not `helm -f values.yaml`
 
-*Part 3 of [a five-part field report](../blog.md). This is the finding we have not seen written down anywhere, and it will break any chart, not just HAMi.*
+*Part 3 of [a seven-part field report](../blog.md). This is the finding we have not seen written down anywhere, and it will break any chart, not just HAMi.*
 
 We wrote the Rancher UI walkthrough from the Helm one. Same chart, same values, different front end — how different could it be. The instruction we wrote was the obvious one:
 

@@ -1,4 +1,4 @@
-# Sharing a GPU on Kubernetes: a five-part field report
+# Sharing a GPU on Kubernetes: a seven-part field report
 
 We spent a couple of weeks putting [HAMi](https://github.com/Project-HAMi/HAMi) onto a real Rancher-managed RKE2 cluster, breaking it, fixing it, migrating to it, migrating back off it, and writing down everything that surprised us. This is that write-up.
 

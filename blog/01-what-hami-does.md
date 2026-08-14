@@ -1,6 +1,6 @@
 # What HAMi actually does, and what it costs
 
-*Part 1 of [a five-part field report](../blog.md) on running HAMi in anger.*
+*Part 1 of [a seven-part field report](../blog.md) on running HAMi in anger.*
 
 Kubernetes allocates GPUs as whole devices. `nvidia-device-plugin` tells kubelet "this node has 1 `nvidia.com/gpu`", a pod asks for 1, and that pod owns the card until it exits. There is no notion of half a GPU.
 
