@@ -92,19 +92,23 @@ So make three targeted edits. **Two of the three keys appear more than once in t
 The decoys, both of which look right and do nothing useful:
 
 - **`runtimeClassName: ''` around line 117**, at 4-space indent under `devices.ascend:`. Edit that one and the install still succeeds while the device plugin keeps crash-looping — the exact failure the setting exists to prevent.
-- **`enabled: false` around line 219**, at 6-space indent under `admissionWebhook.customURL:`, four lines above the one you want. It is already `false`, so "fixing" it changes nothing and leaves the real webhook on.
+- **`enabled: false` around line 219**, at 6-space indent under `admissionWebhook.customURL:`, four lines above the one you want. It is already `false`, so "fixing" it changes nothing and leaves the real webhook on. Before you edit, the value distinguishes them — only one of the two is `true`. Afterwards it doesn't, so if you come back to check your work, go by indentation.
 
-Before, with both targets in blue and the ascend decoy in red:
+**The `devicePlugin` block — before.** Both targets in blue, the `devices.ascend` look-alike in grey:
 
-![Values before editing](images/06-values-before.png)
+![devicePlugin values before editing](images/06-values-before-deviceplugin.png)
 
-After the first two edits — note line 117 deliberately untouched:
+**After.** Line 117 is deliberately still `''`:
 
 ![devicePlugin edits applied](images/07-values-after-deviceplugin.png)
 
-And the webhook edit, with the `customURL` decoy marked. `metricsBindAddress: ':9395'` is visible further down, still intact — that is the value whose accidental removal breaks the install:
+**The webhook block — before.** This is the pair worth studying: `customURL.enabled` is **already `false`**, and only `admissionWebhook.enabled` is `true`. The value is what tells them apart, not the key name:
 
-![webhook edit applied](images/08-values-after-webhook.png)
+![webhook values before editing](images/08-values-before-webhook.png)
+
+**After.** Now *both* read `false` — which is exactly why the before shot matters. Once you've made the edit there is nothing on screen to distinguish the line you changed from the one you left, so check the indentation, not the value. `metricsBindAddress: ':9395'` is visible further down, still intact — that is the value whose accidental removal breaks the install:
+
+![webhook edit applied](images/09-values-after-webhook.png)
 
 The complete change is in [`values.diff`](values.diff) — captured from the editor buffer itself, before and after:
 
@@ -127,7 +131,7 @@ The complete change is in [`values.diff`](values.diff) — captured from the edi
 
 **303 lines before, 303 lines after.** That line count is the check worth doing: if yours drops, you removed keys, and Rancher will send them as explicit nulls.
 
-![click Install](images/09-install-click.png)
+![click Install](images/10-install-click.png)
 
 Note the `gpu: null` trick from [the Helm scenario](../deploy-with-helm/) is **not** used here. There you add a null to remove the chart's default key; here you replace the line outright, because nulling removed keys is already what Rancher does.
 
