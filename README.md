@@ -24,6 +24,10 @@ It also runs its own scheduler and a mutating webhook that routes GPU pods to it
 
 [`docs/tutorial.md`](docs/tutorial.md) — about 20 minutes on a scratch cluster, ending with two pods running on one physical GPU with different enforced memory limits. It installs the stock plugin first so you can see the limitation before you fix it, and puts everything back at the end. No decisions to make.
 
+## Write-up
+
+[`blog.md`](blog.md) is a five-part field report: what HAMi does and what it costs, the install that broke GPU scheduling cluster-wide, why Rancher's values editor is not `helm -f`, migrating a live cluster both directions, and why our GPU labels all said AMD. Narrative rather than instructions — the docs below are the instructions.
+
 ## Docs
 
 | | |
