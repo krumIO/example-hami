@@ -10,7 +10,14 @@ Walked end to end on Rancher **v2.14.3** against an RKE2 cluster; screenshots in
 
 *Apps* → *Repositories* → *Create*.
 
-In the screenshots throughout this page, a **red ring and cursor** mark the thing to click next, **blue** marks a field or line to set, and **amber** marks a line that has just been changed.
+Screenshot conventions — one colour, one meaning:
+
+| | |
+| --- | --- |
+| **Magenta ring + cursor** | the control to click next |
+| **Blue** | a field or line you are about to set |
+| **Amber** | that line after you changed it |
+| **Grey ✗** | a look-alike key — leave it alone |
 
 ![Repositories list](images/01-repositories.png)
 
