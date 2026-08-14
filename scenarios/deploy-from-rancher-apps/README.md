@@ -71,7 +71,7 @@ The wizard opens **already in Edit YAML** — there is no form-to-YAML toggle to
 
 **Edit the values you need in place. Do not select-all and paste your own values file.**
 
-Rancher does not pass this content to Helm as an overlay. It diffs the editor against the chart defaults and writes an explicit **`null`** for every key you removed. Replace the ~200 pre-filled lines with a 14-line values file and Rancher generates 76 explicit nulls, wiping out chart defaults you never intended to touch. The install then fails like this:
+Rancher does not pass this content to Helm as an overlay. It diffs the editor against the chart defaults and writes an explicit **`null`** for every key you removed. Replace the 303 pre-filled lines with a 14-line values file and Rancher generates 76 explicit nulls, wiping out chart defaults you never intended to touch. The install then fails like this:
 
 ```text
 Error: INSTALLATION FAILED: template: hami/templates/scheduler/deployment.yaml:151:59:
