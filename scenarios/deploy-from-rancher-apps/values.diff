@@ -1,0 +1,35 @@
+--- values.yaml  (as Rancher pre-fills it — chart 2.9.0 defaults)
++++ values.yaml  (after the three in-place edits)
+@@ -60,17 +60,17 @@
+       }
+     externalConfigName: ''
+   nvidiaDriverRoot: null
+   nvidiaHookPath: null
+   nvidiaNodeSelector:
+-    gpu: 'on'
++    krum.io/gpu-plugin: hami
+   passDeviceSpecsEnabled: false
+   pluginPath: /var/lib/kubelet/device-plugins
+   podAnnotations: {}
+   preConfiguredDeviceMemory: 0
+   resources: {}
+-  runtimeClassName: ''
++  runtimeClassName: nvidia
+   service:
+     annotations: {}
+     httpPort: 31992
+     labels: {}
+     type: NodePort
+@@ -218,11 +218,11 @@
+     customURL:
+       enabled: false
+       host: 127.0.0.1
+       path: /webhook
+       port: 31998
+-    enabled: true
++    enabled: false
+     failurePolicy: Ignore
+     namespaceSelector:
+       matchExpressions: []
+       matchLabels: null
+     objectSelector:
