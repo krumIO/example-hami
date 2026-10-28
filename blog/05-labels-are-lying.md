@@ -54,6 +54,8 @@ An iGPU is invisible to NVML, so this and any generic `gpu-count` label will leg
 
 ## Where AMD and Intel actually stand
 
+> **Update, 2026-10-28.** AMD shipped in HAMi **v2.10.0** on 2026-08-21, eighteen days after the merge described below. The scope is wider than we recorded: Radeon as well as Instinct. The section is left as written because the reasoning is the point, and the postscript at the end says which parts held up. Current requirements are in [`docs/reference.md`](../docs/reference.md#amd-specific-constraints).
+
 Since we were in mixed-vendor territory anyway, we checked properly. We had initially written that HAMi supports neither. That was half wrong, and the correction is worth having.
 
 **AMD is supported** — but not in any released version. The sharing feature merged to `master` on 2026-08-03, after v2.9.0 was cut on 2026-05-19. There is no milestone on the PR and none open for the next minor, so there is no published target release. Using it today means running `master`.
@@ -81,6 +83,22 @@ The rule that came out of it: a roadmap entry reliably means *not available to y
 The reassuring part: different vendors advertise different resource names, so their device plugins never collide. An Intel plugin serving `gpu.intel.com/i915` and HAMi serving `nvidia.com/gpu` coexist on the same node with no arrangement between them. The [per-node conflict](04-migrating-both-directions.md) that shapes every migration procedure is specifically same-name contention.
 
 What breaks is selection. And selection breaks because the labels lie.
+
+---
+
+## Postscript: what the version-gate reasoning got right
+
+AMD shipped in v2.10.0 on 2026-08-21, eighteen days after the PR merged. Scoring the calls above:
+
+**The merged-PR heuristic held.** "A roadmap entry reliably means not available to you yet; for distance, look for a merged PR" was the right instinct. A merged PR with no milestone turned out to mean weeks, not quarters.
+
+**Reading "no milestone" as "no date" was too cautious.** We treated the absent milestone as the signal and concluded "running this today means running `master`". The merge itself was the stronger signal, and it was already sitting there.
+
+**The directory-presence trap held exactly as written.** `pkg/device/amd` in the v2.9.0 tag is still a partial implementation. Anyone who checked for the directory rather than the release still gets the wrong answer.
+
+**The hardware scope was wrong.** We wrote "AMD Instinct/ROCm hardware", taking the worked example for the supported set. The shipped backend covers Radeon too, and the real requirement is a ROCm-supported GPU with `amdgpu`, `/dev/kfd` and `/dev/dri`. Worth remembering that a vendor's example configuration is not their compatibility list.
+
+**One collision we named too narrowly.** We called the AMD GPU Operator's plugin "the one genuine cross-vendor collision". It is not the only one: the upstream ROCm device plugin claims `amd.com/gpu` as well, and the kubelet refuses whichever registers second. The rule is one plugin per resource name, whoever ships it.
 
 ---
 

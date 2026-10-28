@@ -68,7 +68,7 @@ resources:
     amd.com/gpucores: 30
 ```
 
-**Version gate:** AMD vGPU is not in a released HAMi yet. It merged to `master` on 2026-08-03 ([PR #2290](https://github.com/Project-HAMi/HAMi/pull/2290)), after v2.9.0 (2026-05-19) was cut, with no milestone and so no published target release. Running this today means running `master`. The `pkg/device/amd` directory in the v2.9.0 tag is an earlier partial implementation and will not give you sharing.
+**Version gate:** AMD vGPU shipped in **v2.10.0** (2026-08-21), after this repo's target of v2.9.0. On v2.9.0 you do not have it: the `pkg/device/amd` directory in that tag is an earlier partial implementation and will not give you sharing. Upgrade to v2.10.0 or later for the AMD backend, and read [`../../docs/reference.md`](../../docs/reference.md#amd-specific-constraints) first, because it needs two components beyond the HAMi chart and rules out any other plugin that registers `amd.com/gpu`.
 
 Constraints specific to the AMD path, all from [HAMi's AMD guide](https://project-hami.io/docs/next/userguide/amd-device/enable-amd-gpu-sharing) — that page is in the **`next` (unreleased)** docs, so treat this as pre-release:
 
@@ -76,7 +76,7 @@ Constraints specific to the AMD path, all from [HAMi's AMD guide](https://projec
 - The AMD GPU Operator is recommended, with **its native device-plugin disabled** so it doesn't fight HAMi for `amd.com/gpu`.
 - HAMi's `amd-device-plugin`, chart/image 0.0.1 or newer.
 - Workload images need **glibc ≥ 2.34**. Ubuntu 20.04, RHEL 8, and musl/Alpine images are unsupported — a constraint on *your application images*, not just the platform, so check before promising sharing to a team.
-- The chart's 2.9.0 defaults list `amd.com/gpu-memory`, while the `next` docs use `amd.com/gpumem`. Set the names explicitly rather than relying on defaults, and make the values match what your plugin actually advertises.
+- The chart's 2.9.0 defaults list `amd.com/gpu-memory`, while v2.10.0 uses `amd.com/gpumem`. Set the names explicitly rather than relying on defaults, and make the values match what your plugin actually advertises.
 
 ## Case 2: NVIDIA under HAMi, another vendor under its own plugin
 

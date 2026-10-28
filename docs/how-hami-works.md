@@ -40,7 +40,7 @@ Two things follow, and they're the basis of every procedure in this repo:
 
 **The conflict is per node, not per cluster.** Two DaemonSets with disjoint node selectors never interact. That's why migration is a node-at-a-time relabel rather than a cluster-wide cutover, and why there's never a window with no GPUs anywhere.
 
-**Different vendors never conflict at all.** `amd.com/gpu` and `nvidia.com/gpu` are different keys. The only cross-vendor collision is HAMi's AMD backend against the AMD GPU Operator's own plugin — both want `amd.com/gpu` — which is exactly why HAMi's AMD guide says to disable the operator's.
+**Different vendors never conflict at all.** `amd.com/gpu` and `nvidia.com/gpu` are different keys. The collisions are all within AMD: HAMi's AMD backend against the AMD GPU Operator's plugin, and against the upstream ROCm device plugin. All three want `amd.com/gpu`, the kubelet serves one resource from one plugin, and the second registration is refused. HAMi's AMD guide says to disable whichever is already there.
 
 ## Why the runtime matters so much
 
