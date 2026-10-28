@@ -2,6 +2,8 @@
 
 ## First: does HAMi cover your accelerators?
 
+This page describes **HAMi v2.9.0**, the release this repo targets.
+
 HAMi virtualizes **NVIDIA** GPUs in the current release, **AMD** on `master` only (merged after v2.9.0, no target release published), and **not Intel** — that one is a roadmap entry with no implementation behind it. A dozen other vendors have backends.
 
 Full support matrix, release positions, and the AMD constraints: [`reference.md`](reference.md#vendor-support). If your cluster has more than one vendor in it, read [`../scenarios/mixed-gpu-vendors/`](../scenarios/mixed-gpu-vendors) too — coexistence is straightforward, node selection is where it goes wrong.

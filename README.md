@@ -4,6 +4,8 @@ Share one physical GPU across several pods on Kubernetes, using [HAMi](https://g
 
 This repo is Kubernetes-focused: plain manifests, Helm, Rancher, and Fleet. Nothing here assumes a PaaS layer.
 
+> **Targets HAMi v2.9.0** (chart and app), the current release when this was written. Every scenario, manifest, and version claim here is written against that release. Newer HAMi releases change what is supported, most of all for non-NVIDIA vendors, so check [`docs/reference.md`](docs/reference.md) before assuming a statement still holds.
+>
 > Status: validated on RKE2 + SL Micro with 6 GB Turing cards, under Rancher. The deployment shapes and both migration directions were executed end to end; what was *not* exercised is a production inference workload on a shared card (see each scenario's Validated section for exactly what was proven).
 
 ## What HAMi changes

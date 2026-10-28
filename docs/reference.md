@@ -4,6 +4,8 @@ Dry lookup for HAMi as deployed by this repo. For *why* any of it works the way 
 
 Accurate as of **2026-08-06**, HAMi chart/app **v2.9.0**.
 
+Every version claim on this page is a statement about v2.9.0 and about what had merged to `master` on that date. Release positions move; re-check them against the [HAMi releases page](https://github.com/Project-HAMi/HAMi/releases) rather than trusting this page for a newer version.
+
 ## Vendor support
 
 The authoritative list is the vendor directories under [`pkg/device/`](https://github.com/Project-HAMi/HAMi/tree/master/pkg/device) in the source, not the chart values and not the roadmap.
